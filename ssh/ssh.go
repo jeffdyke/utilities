@@ -68,6 +68,7 @@ func RunCommands(client ssh.Client, cmds []string) string {
 func formatHost(host string) string {
 	return fmt.Sprintf("%s:%s", host, PORT)
 }
+
 /* This will be changed as there is no need for Bastion to `extend` PublicKey */
 type PublicKeyConnection struct {
 	User string
@@ -76,16 +77,14 @@ type PublicKeyConnection struct {
 
 
 type BastionConnectInfo struct {
-	c PublicKeyConnection
+	User string
+	Host string
 	Bastion string
 
 }
 
 func BastionConnect(usr string, host string, bastion string)  (client *ssh.Client, err error){
-	var conn = BastionConnectInfo{
-		c: PublicKeyConnection{User: usr, Host: host},
-		Bastion: bastion,
-	}
+	var conn = BastionConnectInfo{User: usr, Host: host, Bastion: bastion}
 	return conn.Connect()
 }
 
@@ -107,12 +106,12 @@ func (ci *BastionConnectInfo) Connect() (*ssh.Client, error) {
 	}
 	lanConn, err := sshc.Dial(TCP, formatHost(ci.c.Host))
 	if err != nil {
-		log.Fatalf("Failed to connect to %v\nError: %v", ci.c.Host, err)
+		log.Fatalf("Failed to connect to %v\nError: %v", ci.Host, err)
 		return nil, err
 	}
-	ncc, chans, reqs, err := ssh.NewClientConn(lanConn, formatHost(ci.c.Host), config)
+	ncc, chans, reqs, err := ssh.NewClientConn(lanConn, formatHost(ci.Host), config)
 	if err != nil {
-		fmt.Printf("got error trying to get new client connection %v\n -- %v\n", formatHost(ci.c.Host), err)
+		fmt.Printf("got error trying to get new client connection %v\n -- %v\n", formatHost(ci.Host), err)
 		return nil, err
 	}
 

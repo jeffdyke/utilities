@@ -10,6 +10,25 @@ const (
 	DEFAULTREGION = "us-east-1"
 )
 // silly silly silly, just making sure everything is installed in a separate path
+type AwsDefaults struct {
+	region string
+}
+
+type AwsConfig struct {
+
+	Region string
+	AccessId string
+	SecretKey string
+}
+
+func (a AwsDefaults) Session() *session.Session {
+	sess, _ := session.NewSession(&aws.Config{
+		Region: aws.String(DEFAULTREGION)},
+	)
+	return sess
+}
+
+
 func Client() {
 	sess := EnvSession()
 
