@@ -96,15 +96,15 @@ func PublicKeyConnect(usr string, host string) (*ssh.Client, error) {
 
 func (ci *BastionConnectInfo) Connect() (*ssh.Client, error) {
 	var localAgent = sshAgentConnect()
-	_ = clientAuth(ci.c.User, ssh.PublicKeysCallback(localAgent.Signers))
+	_ = clientAuth(ci.User, ssh.PublicKeysCallback(localAgent.Signers))
 	var sshAgent = sshAgentConnect()
-	var config = clientAuth(ci.c.User, ssh.PublicKeysCallback(sshAgent.Signers))
+	var config = clientAuth(ci.User, ssh.PublicKeysCallback(sshAgent.Signers))
 	sshc, err := ssh.Dial(TCP, formatHost(ci.Bastion), config)
 	if err != nil {
 		log.Fatalf("Failed to connect to Bastion host %v\nError: %v", ci.Bastion, err)
 		return nil, err
 	}
-	lanConn, err := sshc.Dial(TCP, formatHost(ci.c.Host))
+	lanConn, err := sshc.Dial(TCP, formatHost(ci.Host))
 	if err != nil {
 		log.Fatalf("Failed to connect to %v\nError: %v", ci.Host, err)
 		return nil, err
