@@ -14,8 +14,7 @@ type AwsDefaults struct {
 func (a AwsDefaults) Session() *session.Session {
 
 	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String(DEFAULTREGION),
-		LogLevel: aws.LogLevel(aws.LogDebugWithHTTPBody)},
+		Region: aws.String(DEFAULTREGION)},
 	)
 	return sess
 }
