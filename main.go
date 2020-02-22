@@ -1,13 +1,44 @@
 package main
 
-
-
 import (
+	"encoding/json"
 	. "github.com/jeffdyke/utilities/aws"
+	"log"
+	"time"
 )
 
+
+
+func run(f Filter) {
+
+
+	filtered := f.FilterLogs()
+	var swEvents []SuricataEvent
+	for _, event := range filtered {
+		var sEvent SuricataEvent
+		data := []byte(*event.Message)
+		err := json.Unmarshal(data, &sEvent)
+		if err != nil {
+			log.Fatalf("We failed to unmarshal %v\n", err)
+		}
+		swEvents = append(swEvents, sEvent)
+
+	}
+
+	log.Printf("final: %+v\n", swEvents)
+}
+
+
 func main() {
-	GetLogs()
+	se := DateDiff(86400, time.Second)
+	ssf := Filter{
+		EndTime:         se.End,
+		FilterPattern:   SuricataFilter,
+		LogGroupName: "ProductionSuricataIPS",
+		LogStreamPrefix: "prod",
+		StartTime:       se.Start,
+	}
+	run(ssf)
 }
 //func main() {
 //	var u, _ = user.Current()
