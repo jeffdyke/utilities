@@ -1,6 +1,7 @@
-package aws
+package cloudwatch
 
 import (
+	"encoding/json"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/jeffdyke/utilities/aws/client"
@@ -8,7 +9,7 @@ import (
 	"time"
 )
 type LogConfig struct {
-	LogStream string
+	LogGroup string
 	LogPrefix string
 
 }
@@ -19,13 +20,8 @@ type StartEndFilter struct {
 }
 
 
-//
-//var
-//var prod = LogConfig{LogStream:"ProductionSuricataIPS"}
-
 const (
 	SuricataFilter = `{ $.event_type = alert && $.alert.action = allowed && $.alert.signature_id!= 2013504 && $.alert.signature_id!= 2221002 && $.http.http_method!= PROXY}`
-
 )
 
 
@@ -47,13 +43,39 @@ func DateDiff(timeBack int, d time.Duration ) *StartEndFilter {
 
 	var startTime time.Time
 	location, _ := time.LoadLocation("UTC")
-	now := time.Now().In(location)
-	startTime = now.Add(time.Duration(-timeBack)*d).In(location)
 
+	now := time.Now().In(location)
+	startTime = now.Add(time.Duration(-timeBack)*d)
+	log.Printf("StartTime is %v Now is %v", startTime, now)
 	return &StartEndFilter{Start:startTime.Unix() * 1000, End: now.Unix() * 1000}
 }
+func Suricata(f Filter) []SuricataEvent {
+	filtered := f.FilterLogs()
+	var swEvents []SuricataEvent
+	for _, event := range filtered {
+		var sEvent SuricataEvent
+		data := []byte(*event.Message)
+		err := json.Unmarshal(data, &sEvent)
+		if err != nil {
+			log.Fatalf("Failed to unmarshal %v\n", err)
+		}
+		swEvents = append(swEvents, sEvent)
 
+	}
+	return swEvents
+}
 
+func MakeFilter(awsQuery string, config LogConfig, se StartEndFilter) Filter {
+	log.Printf("Group: %v, Prefix: %v", config.LogGroup, config.LogPrefix)
+	ssf := Filter{
+		EndTime:         se.End,
+		FilterPattern:   awsQuery,
+		LogGroupName: 	 config.LogGroup,
+		LogStreamPrefix: config.LogPrefix,
+		StartTime:       se.Start,
+	}
+	return ssf
+}
 func (f Filter) fetch(svc *cloudwatchlogs.CloudWatchLogs, nextToken string) (*cloudwatchlogs.FilterLogEventsOutput, error) {
 	if nextToken != f.NextToken && f.NextToken != "" {
 		f.NextToken = nextToken
@@ -76,13 +98,8 @@ func (f Filter) fetch(svc *cloudwatchlogs.CloudWatchLogs, nextToken string) (*cl
 func (f Filter) FilterLogs() []cloudwatchlogs.FilteredLogEvent {
 	sess := client.Session()
 	svc := cloudwatchlogs.New(sess)
-
-	se := DateDiff(86400, time.Second)
-
 	var err error
 	var cwEvents []cloudwatchlogs.FilteredLogEvent
-	loc, _ := time.LoadLocation("UTC")
-	log.Printf("Start time is %v and end time is %v\n", time.Unix(se.Start, 0).In(loc), time.Unix(se.End, 0).In(loc))
 	resp, err := f.fetch(svc, "")
 
 	if err != nil {
@@ -94,23 +111,6 @@ func (f Filter) FilterLogs() []cloudwatchlogs.FilteredLogEvent {
 		cwEvents = append(cwEvents, *event)
 	}
 	return cwEvents
-
-	/*for _, event := range resp.Events {
-		var sEvent SuricataEvent
-		data := []byte(*event.Message)
-		err := json.Unmarshal(data, &sEvent)
-		if err != nil {
-			log.Fatalf("We failed to unmarshal %v\n", err)
-		}
-		cwEvents = append(cwEvents, sEvent)
-		nextToken := resp.NextToken
-		if &gotToken == nextToken {
-			log.Printf("Tokens match %v %v, existing", gotToken, nextToken)
-			os.Exit(0)
-		}
-	}*/
-	
-	//resp, err = svc.GetLogEvents(&cloudwatchlogs.GetLogEventsInput{})
 }
 
 

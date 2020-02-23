@@ -1,44 +1,38 @@
 package main
 
 import (
-	"encoding/json"
-	. "github.com/jeffdyke/utilities/aws"
+	cw "github.com/jeffdyke/utilities/aws/cloudwatch"
 	"log"
 	"time"
 )
 
 
 
-func run(f Filter) {
-
-
-	filtered := f.FilterLogs()
-	var swEvents []SuricataEvent
-	for _, event := range filtered {
-		var sEvent SuricataEvent
-		data := []byte(*event.Message)
-		err := json.Unmarshal(data, &sEvent)
-		if err != nil {
-			log.Fatalf("We failed to unmarshal %v\n", err)
-		}
-		swEvents = append(swEvents, sEvent)
-
-	}
-
-	log.Printf("final: %+v\n", swEvents)
-}
-
-
 func main() {
-	se := DateDiff(86400, time.Second)
-	ssf := Filter{
-		EndTime:         se.End,
-		FilterPattern:   SuricataFilter,
-		LogGroupName: "ProductionSuricataIPS",
-		LogStreamPrefix: "prod",
-		StartTime:       se.Start,
+	startEnd := cw.DateDiff(86400, time.Second)
+	var configs []cw.LogConfig
+	configs = append(configs, cw.LogConfig{
+		LogGroup:  "StagingSuricataIPS",
+		LogPrefix: "staging",
+	})
+	configs = append(configs, cw.LogConfig{
+		LogGroup:  "ProductionSuricataIPS",
+		LogPrefix: "prod",
+	})
+
+	var results []cw.SuricataEvent
+	for _, envConfig := range configs {
+		log.Printf("Running for %v and %v\n", envConfig.LogPrefix, envConfig.LogGroup)
+		var f cw.Filter
+		f = cw.MakeFilter(cw.SuricataFilter, envConfig, *startEnd)
+		r := cw.Suricata(f)
+		results = append(results, r...)
 	}
-	run(ssf)
+
+	log.Printf("Total events %v", len(results))
+	// log.Printf("End Result :\n%+v", out)
+
+
 }
 //func main() {
 //	var u, _ = user.Current()
