@@ -3,33 +3,17 @@ package main
 import (
 	cw "github.com/jeffdyke/utilities/aws/cloudwatch"
 	"log"
-	"time"
+	"encoding/json"
 )
 
 
 
 func main() {
-	startEnd := cw.DateDiff(86400, time.Second)
-	var configs []cw.LogConfig
-	configs = append(configs, cw.LogConfig{
-		LogGroup:  "StagingSuricataIPS",
-		LogPrefix: "staging",
-	})
-	configs = append(configs, cw.LogConfig{
-		LogGroup:  "ProductionSuricataIPS",
-		LogPrefix: "prod",
-	})
+	events := cw.SuricataDaily()
+	out, _ := json.Marshal(events)
+	log.Print(string(out))
 
-	var results []cw.SuricataEvent
-	for _, envConfig := range configs {
-		log.Printf("Running for %v and %v\n", envConfig.LogPrefix, envConfig.LogGroup)
-		var f cw.Filter
-		f = cw.MakeFilter(cw.SuricataFilter, envConfig, *startEnd)
-		r := cw.Suricata(f)
-		results = append(results, r...)
-	}
-
-	log.Printf("Total events %v", len(results))
+	log.Printf("Total events %v", len(events))
 	// log.Printf("End Result :\n%+v", out)
 
 
