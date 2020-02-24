@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"encoding/json"
 	"log"
+
 )
 const (
 	SuricataFilter = `{ $.event_type = alert && $.alert.action = allowed && $.alert.signature_id!= 2013504 && $.alert.signature_id!= 2221002 && $.http.http_method!= PROXY}`
@@ -12,7 +13,28 @@ type IndexedSuricataAlert struct {
 	Count uint32 `json:"count"`
 }
 type IndexedAlert = map[uint32]IndexedSuricataAlert
+type SuricataReport struct {
+	SignatureId uint32 `csv:"signature_id"`
+	Severity uint8 `csv:"severity"`
+	Category string `csv:"category"`
+	Signature string `csv:"signature"`
+	Count uint32 `csv:"count"`
+	_ struct{}
+}
 
+func Report(ia IndexedAlert) []SuricataReport {
+	var agg []SuricataReport
+	for _, indexedAlert := range ia {
+		agg = append(agg, SuricataReport{
+			SignatureId: indexedAlert.Alert.SignatureId,
+			Severity:    indexedAlert.Alert.Severity,
+			Category:    indexedAlert.Alert.Category,
+			Signature:   indexedAlert.Alert.Signature,
+			Count:       indexedAlert.Count,
+		})
+	}
+	return agg
+}
 func SuricataEvents(startEnd StartEndFilter) IndexedAlert {
 	var configs []LogConfig
 	configs = append(configs, LogConfig{

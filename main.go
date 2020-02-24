@@ -1,20 +1,23 @@
 package main
 
 import (
-	"encoding/json"
+	"github.com/gocarina/gocsv"
 	cw "github.com/jeffdyke/utilities/aws/cloudwatch"
 	"log"
 	"time"
 )
 
 
-
 func main() {
 	startEnd := cw.DateDiff(86400, time.Second)
 
 	events := cw.SuricataEvents(*startEnd)
-	out, _ := json.Marshal(events)
-	log.Print(string(out))
+	report := cw.Report(events)
+	csvContent, err := gocsv.MarshalString(&report)
+	if err != nil {
+		log.Fatalf("Error marshalling to csv %v\n", err)
+	}
+	log.Print(csvContent)
 	log.Printf("Total events %v", len(events))
 
 
