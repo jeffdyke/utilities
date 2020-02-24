@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/aws/aws-sdk-go v1.29.6
-	github.com/gocarina/gocsv v0.0.0-20200212142550-0b7418e775b8 // indirect
+	github.com/gocarina/gocsv v0.0.0-20200212142550-0b7418e775b8
 	github.com/jeremywohl/flatten v1.0.1 // indirect
 	golang.org/x/crypto v0.0.0-20200219234226-1ad67e1f0ef4
 	golang.org/x/net v0.0.0-20200219183655-46282727080f // indirect
