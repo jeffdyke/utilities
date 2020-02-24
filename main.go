@@ -1,20 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	cw "github.com/jeffdyke/utilities/aws/cloudwatch"
 	"log"
-	"encoding/json"
+	"time"
 )
 
 
 
 func main() {
-	events := cw.SuricataDaily()
+	startEnd := cw.DateDiff(86400, time.Second)
+
+	events := cw.SuricataEvents(*startEnd)
 	out, _ := json.Marshal(events)
 	log.Print(string(out))
-
 	log.Printf("Total events %v", len(events))
-	// log.Printf("End Result :\n%+v", out)
 
 
 }

@@ -67,13 +67,20 @@ func (f Filter) fetch(svc *cloudwatchlogs.CloudWatchLogs, nextToken string) (*cl
 		StartTime:           aws.Int64(f.StartTime),
 	}
 	if len(nextToken) > 0 {
+		log.Print("next token " + nextToken)
 		fle.NextToken = aws.String(nextToken)
 	}
 	resp, err := svc.FilterLogEvents(fle)
 	return resp, err
 }
 
-
+func FilterList(logConfigs []LogConfig, startEnd StartEndFilter) []Filter {
+	var flSlice []Filter
+	for _ , logConfig := range logConfigs {
+		flSlice = append(flSlice, MakeFilter(SuricataFilter, logConfig, startEnd))
+	}
+	return flSlice
+}
 func (f Filter) FilterLogs() []cloudwatchlogs.FilteredLogEvent {
 	sess := client.Session()
 	svc := cloudwatchlogs.New(sess)

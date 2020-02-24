@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"encoding/json"
 	"log"
-	"time"
 )
 const (
 	SuricataFilter = `{ $.event_type = alert && $.alert.action = allowed && $.alert.signature_id!= 2013504 && $.alert.signature_id!= 2221002 && $.http.http_method!= PROXY}`
@@ -12,8 +11,9 @@ type IndexedSuricataAlert struct {
 	Alert SuricataAlert `json:"alert"`
 	Count uint32 `json:"count"`
 }
-func SuricataDaily() map[uint32]IndexedSuricataAlert {
-	startEnd := DateDiff(86400, time.Second)
+type IndexedAlert = map[uint32]IndexedSuricataAlert
+
+func SuricataEvents(startEnd StartEndFilter) IndexedAlert {
 	var configs []LogConfig
 	configs = append(configs, LogConfig{
 		LogGroup:  "StagingSuricataIPS",
@@ -23,10 +23,8 @@ func SuricataDaily() map[uint32]IndexedSuricataAlert {
 		LogGroup:  "ProductionSuricataIPS",
 		LogPrefix: "prod",
 	})
-	var flSlice []Filter
-	for _ , logConfig := range configs {
-		flSlice = append(flSlice, MakeFilter(SuricataFilter, logConfig, *startEnd))
-	}
+
+	flSlice := FilterList(configs, startEnd)
 	var events []SuricataEvent
 	for _, filter := range flSlice {
 		events = append(events, FindEvents(filter)...)
@@ -35,8 +33,9 @@ func SuricataDaily() map[uint32]IndexedSuricataAlert {
 
 }
 
-func Aggregate(events []SuricataEvent) map[uint32]IndexedSuricataAlert {
-	var agg = make(map[uint32]IndexedSuricataAlert)
+
+func Aggregate(events []SuricataEvent) IndexedAlert {
+	var agg = make(IndexedAlert)
 
 	for _, event := range events {
 		val, ok := agg[event.Alert.SignatureId]
@@ -60,9 +59,7 @@ func FindEvents(f Filter) []SuricataEvent {
 			log.Fatalf("Failed to unmarshal %v\n", err)
 		}
 		swEvents = append(swEvents, sEvent)
-
 	}
 	return swEvents
 }
-
 
