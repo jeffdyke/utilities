@@ -17,9 +17,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error marshalling to csv %v\n", err)
 	}
+	log.Print("----------------\n")
 	log.Print(csvContent)
+	log.Print("----------------\n")
 	log.Printf("Total events %v", len(events))
-
 
 }
 //func main() {
