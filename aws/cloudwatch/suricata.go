@@ -35,7 +35,7 @@ func Report(ia IndexedAlert) []SuricataReport {
 	}
 	return agg
 }
-func SuricataEvents(startEnd StartEndFilter) IndexedAlert {
+func SuricataEvents(startEnd StartEndFilter, filter string) IndexedAlert {
 	var configs []LogConfig
 	configs = append(configs, LogConfig{
 		LogGroup:  "StagingSuricataIPS",
@@ -46,7 +46,7 @@ func SuricataEvents(startEnd StartEndFilter) IndexedAlert {
 		LogPrefix: "prod",
 	})
 
-	flSlice := FilterList(configs, startEnd)
+	flSlice := FilterList(configs, startEnd, filter)
 	var events []SuricataEvent
 	for _, filter := range flSlice {
 		events = append(events, FindEvents(filter)...)

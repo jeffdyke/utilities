@@ -18,7 +18,9 @@ type StartEndFilter struct {
 	End int64
 }
 
-
+type VaryFilter interface {
+	getFilter() string
+}
 //"{"timestamp":"2020-02-21T12:54:01.247016+0000","flow_id":1575895758901495,"event_type":"alert","src_ip":"222.186.19.221","src_port":57546,"dest_ip":"10.1.0.11","dest_port":443,"proto":"TCP","alert":{"action":"allowed","gid":1,"signature_id":2008284,"rev":3,"signature":"ET POLICY Inbound HTTP CONNECT Attempt on Off-Port","category":"Misc activity","severity":3,"metadata":{"updated_at":["2010_07_30"],"created_at":["2010_07_30"]}},"http":{"hostname":"ip.ws.126.net","http_port":443,"url":"ip.ws.126.net:443","http_user_agent":"Go-http-client /1.1","http_method":"CONNECT","protocol":"HTTP /1.1","length":0},"app_proto":"http","flow":{"pkts_toserver":3,"pkts_toclient":1,"bytes_toserver":235,"bytes_toclient":52,"start":"2020-02-21T12:54:01.037111+0000"},"payload":"Q09OTkVDVCBpcC53cy4xMjYubmV0OjQ0MyBIVFRQLzEuMQ0KSG9zdDogaXAud3MuMTI2Lm5ldDo0NDMNClVzZXItQWdlbnQ6IEdvLWh0dHAtY2xpZW50LzEuMQ0KDQo=","payload_printable":"CONNECT ip.ws.126.net:443 HTTP /1.1Host: ip.ws.126.net:443User-Agent: Go-http-client /1.1","stream":1}"
 type Filter struct {
 	EndTime int64
@@ -74,10 +76,10 @@ func (f Filter) fetch(svc *cloudwatchlogs.CloudWatchLogs, nextToken string) (*cl
 	return resp, err
 }
 
-func FilterList(logConfigs []LogConfig, startEnd StartEndFilter) []Filter {
+func FilterList(logConfigs []LogConfig, startEnd StartEndFilter, filter string) []Filter {
 	var flSlice []Filter
 	for _ , logConfig := range logConfigs {
-		flSlice = append(flSlice, MakeFilter(SuricataFilter, logConfig, startEnd))
+		flSlice = append(flSlice, MakeFilter(filter, logConfig, startEnd))
 	}
 	return flSlice
 }

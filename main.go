@@ -6,12 +6,13 @@ import (
 	"log"
 	"time"
 )
-
+const filter = cw.SuricataFilter
 
 func main() {
-	startEnd := cw.DateDiff(86400, time.Second)
 
-	events := cw.SuricataEvents(*startEnd)
+	startEnd := cw.DateDiff(86400, time.Second)
+	// sfilter := "{$.alert.action != allowed}"
+	events := cw.SuricataEvents(*startEnd, filter)
 	report := cw.Report(events)
 	csvContent, err := gocsv.MarshalString(&report)
 	if err != nil {
