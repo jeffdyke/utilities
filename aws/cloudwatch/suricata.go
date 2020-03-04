@@ -10,7 +10,6 @@ const (
 )
 type IndexedSuricataAlert struct {
 	Alert SuricataAlert `json:"alert"`
-	Count uint32 `json:"count"`
 }
 type IndexedAlert = map[uint32]IndexedSuricataAlert
 type SuricataReport struct {
@@ -30,7 +29,6 @@ func Report(ia IndexedAlert) []SuricataReport {
 			Severity:    indexedAlert.Alert.Severity,
 			Category:    indexedAlert.Alert.Category,
 			Signature:   indexedAlert.Alert.Signature,
-			Count:       indexedAlert.Count,
 		})
 	}
 	return agg
@@ -60,11 +58,9 @@ func Aggregate(events []SuricataEvent) IndexedAlert {
 	var agg = make(IndexedAlert)
 
 	for _, event := range events {
-		val, ok := agg[event.Alert.SignatureId]
-		if ok {
-			val.Count++
-		} else {
-			agg[event.Alert.SignatureId] = IndexedSuricataAlert{Count: 1, Alert:event.Alert}
+		_, ok := agg[event.Alert.SignatureId]
+		if ! ok {
+			agg[event.Alert.SignatureId] = IndexedSuricataAlert{Alert:event.Alert}
 		}
 	}
 	return agg
